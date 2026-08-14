@@ -1,0 +1,53 @@
+name: SUT Defect
+description: A defect in the system under test (Restful Booker)
+labels: ["bug:sut"]
+body:
+  - type: input
+    id: endpoint
+    attributes:
+      label: Endpoint
+      placeholder: "PATCH /booking/{id}"
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Include the exact request. Curl or httpx, either is fine.
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: Cite the documented behavior or the reasonable inference.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical - data loss or security
+        - Major - core function broken, no workaround
+        - Minor - broken with a workaround
+        - Trivial - cosmetic or spec mismatch only
+    validations:
+      required: true
+  - type: input
+    id: coverage
+    attributes:
+      label: Covering test
+      placeholder: "tests/negative/test_booking_patch.py::test_partial_update_persists"
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Who is affected and how badly, in one or two sentences.
