@@ -9,7 +9,10 @@ repos:
     rev: v1.11.2
     hooks:
       - id: mypy
-        additional_dependencies: [pydantic]
+        additional_dependencies:
+          - pydantic
+          - pydantic-settings
+          - pytest
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.21.1
     hooks:
