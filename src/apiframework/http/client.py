@@ -63,22 +63,22 @@ class ApiClient:
 
         return response
 
-    def get(self, url: str) -> httpx.Response:
+    def get(self, url: str, **kwargs: str) -> httpx.Response:
         """Send a GET request."""
-        return self.request("GET", url)
+        return self.request("GET", url, **kwargs)
 
-    def post(self, url: str) -> httpx.Response:
+    def post(self, url: str, **kwargs: str) -> httpx.Response:
         """Send a POST request."""
-        return self.request("POST", url)
+        return self.request("POST", url, **kwargs)
 
-    def put(self, url: str) -> httpx.Response:
+    def put(self, url: str, **kwargs: str) -> httpx.Response:
         """Send a PUT request."""
-        return self.request("PUT", url)
+        return self.request("PUT", url, **kwargs)
 
-    def delete(self, url: str) -> httpx.Response:
+    def delete(self, url: str, **kwargs: str) -> httpx.Response:
         """Send a DELETE request."""
-        return self.request("DELETE", url)
+        return self.request("DELETE", url, **kwargs)
 
-    def patch(self, url: str) -> httpx.Response:
+    def patch(self, url: str, **kwargs: str) -> httpx.Response:
         """Send a PATCH request."""
-        return self.request("PATCH", url)
+        return self.request("PATCH", url, **kwargs)
