@@ -126,3 +126,29 @@ A typo'd marker otherwise silently fails and reports a SUCCESS – a false green
 check that isn't checking anything.
 
 ---
+
+## 4. Type checking
+
+`mypy` runs in `strict` mode on every commit, checking for type errors.
+
+```toml
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+strict = true
+warn_unreachable = true
+```
+
+models *are* the contract assertions
+- they are the test data
+- they are the documentation
+- they are the source of truth
+
+In designing the pydantic models for booking payloads, I considered the following:
+- the payloads are the contract assertions
+- the payloads are the documentation
+- the payloads are the source of truth
+
+Therefore, unknown fields in a response are flagged as errors.  This allows for schema drift detection.
+The tradeoff is that the test runs may be more brittle as unknown changes to the payloads will cause test failures.
+That's as it should be, though.
+
