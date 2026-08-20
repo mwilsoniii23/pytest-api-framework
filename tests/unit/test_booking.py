@@ -29,7 +29,7 @@ def test_booking_accepts_pythonic_booking_dates_field_name() -> None:
         lastname="Brown",
         totalprice=111,
         depositpaid=True,
-        booking_dates=BookingDates(checkin="2023-01-01", checkout="2023-01-02"),
+        booking_dates=BookingDates(checkin=date(2023, 1, 1), checkout=date(2023, 1, 2)),
         additionalneeds="Breakfast",
     )
 
@@ -57,7 +57,7 @@ def test_booking_accepts_api_alias_bookingdates_field_name() -> None:
         }
     )
 
-    assert booking.booking_dates.checkin == BookingDates(
+    assert booking.booking_dates == BookingDates(
         checkin=date(2023, 1, 1),
         checkout=date(2023, 1, 2),
     )
@@ -69,7 +69,7 @@ def test_booking_serialized_with_api_alias() -> None:
         lastname="Brown",
         totalprice=111,
         depositpaid=True,
-        bookingdates=BookingDates(checkin=date(2023, 1, 1), checkout=date(2023, 1, 2)),
+        booking_dates=BookingDates(checkin=date(2023, 1, 1), checkout=date(2023, 1, 2)),
         additionalneeds="Breakfast",
     )
 
@@ -94,7 +94,7 @@ def test_booking_additional_is_optional_and_can_be_excluded_when_none() -> None:
         lastname="Brown",
         totalprice=111,
         depositpaid=True,
-        bookingdates=BookingDates(
+        booking_dates=BookingDates(
             checkin=date(2023, 1, 1),
             checkout=date(2023, 1, 2),
         ),
