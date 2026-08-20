@@ -3,7 +3,7 @@
 import logging
 import uuid
 from types import TracebackType
-from typing import Any, Self
+from typing import Any, Protocol, Self
 
 import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
@@ -17,13 +17,29 @@ TRANSIENT = (httpx.ConnectError, httpx.ReadTimeout, httpx.WriteTimeout, httpx.Re
 AUTH_FAILURE_STATUSES = {401, 403}
 
 
+class TokenProvider(Protocol):
+    """Auth behavior required by ApiClient"""
+
+    def get_token(self) -> str:
+        """Return an existing token or fetch one"""
+        ...
+
+    def refresh_token(self) -> str:
+        """Force-fetch and return a new token"""
+        ...
+
+    def close(self) -> None:
+        """Release auth provider resources"""
+        ...
+
+
 class ApiClient:
     """Thin, observable HTTP client. Retries transport faults, never status codes."""
 
     def __init__(
         self,
         settings: Settings | None = None,
-        auth_provider: AuthProvider | None = None,
+        auth_provider: TokenProvider | None = None,
     ) -> None:
         self._settings = settings or get_settings()
         self._auth_provider = auth_provider or AuthProvider(self._settings)
