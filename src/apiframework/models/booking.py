@@ -12,7 +12,10 @@ class ApiModel(BaseModel):
     during validation and serialization.
     """
 
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(
+        populate_by_name=True,
+        extra="forbid",
+    )
 
 
 class BookingDates(ApiModel):
