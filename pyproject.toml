@@ -40,6 +40,9 @@ warn_required_dynamic_aliases = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+markers = [
+    "integration: hits the real system under test; excluded from the default run",
+]
 
 [build-system]
 requires = ["hatchling"]
