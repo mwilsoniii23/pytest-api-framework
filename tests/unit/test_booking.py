@@ -170,6 +170,31 @@ def test_booking_id_models_get_booking_list_item() -> None:
     assert booking_id.bookingid == 1
 
 
+def test_booking_rejects_undocumented_fields() -> None:
+    """An unexpected field means the API contract changed.  Fail, don't ignore."""
+    payload = {
+        "firstname": "Jim",
+        "lastname": "Brown",
+        "totalprice": 111,
+        "depositpaid": True,
+        "bookingdates": {"checkin": "2023-01-01", "checkout": "2023-01-02"},
+        "loyaltyTier": "Gold",
+    }
+    with pytest.raises(ValidationError, match="loyaltyTier"):
+        Booking.model_validate(payload)
+
+
+def test_booking_requires_totalprice() -> None:
+    payload = {
+        "firstname": "Jim",
+        "lastname": "Brown",
+        "depositpaid": True,
+        "bookingdates": {"checkin": "2023-01-01", "checkout": "2023-01-02"},
+    }
+    with pytest.raises(ValidationError, match="totalprice"):
+        Booking.model_validate(payload)
+
+
 @pytest.mark.parametrize(
     "payload",
     [
