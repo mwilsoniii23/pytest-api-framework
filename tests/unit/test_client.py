@@ -60,3 +60,15 @@ def test_put_sends_cached_token_in_cookie_header() -> None:
     assert auth_provider.get_token_call_count == 1
     assert auth_provider.refresh_token_call_count == 0
     assert route.calls.last.request.headers["Cookie"] == "token=cached-token"
+
+
+@respx.mock  # type: ignore[misc]
+def test_patch_sends_cached_token_in_cookie_header() -> None:
+    auth_provider = StubAuthProvider()
+
+    with ApiClient(auth_provider=auth_provider) as client:
+        response = client.patch("/booking/1", json={"firstname": "Jane"})
+
+    assert response.status_code == 200
+    assert auth_provider.get_token_call_count == 0
+    assert auth_provider.refresh_token_call_count == 0

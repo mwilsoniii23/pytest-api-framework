@@ -121,22 +121,22 @@ class ApiClient:
         }
         return self.request(method, url, headers=headers, **kwargs)
 
-    def get(self, url: str, **kwargs: str) -> httpx.Response:
+    def get(self, url: str, **kwargs: Any) -> httpx.Response:
         """Send a GET request."""
         return self.request("GET", url, **kwargs)
 
-    def post(self, url: str, **kwargs: str) -> httpx.Response:
+    def post(self, url: str, **kwargs: Any) -> httpx.Response:
         """Send a POST request."""
         return self.request("POST", url, **kwargs)
 
-    def put(self, url: str, **kwargs: str) -> httpx.Response:
+    def put(self, url: str, **kwargs: Any) -> httpx.Response:
         """Send an authenticated PUT request."""
         return self.authenticated_request("PUT", url, **kwargs)
 
-    def delete(self, url: str, **kwargs: str) -> httpx.Response:
+    def delete(self, url: str, **kwargs: Any) -> httpx.Response:
         """Send an authenticated DELETE request."""
         return self.authenticated_request("DELETE", url, **kwargs)
 
-    def patch(self, url: str, **kwargs: str) -> httpx.Response:
-        """Send a PATCH request."""
-        return self.request("PATCH", url, **kwargs)
+    def patch(self, url: str, **kwargs: Any) -> httpx.Response:
+        """Send an authenticated PATCH request."""
+        return self.authenticated_request("PATCH", url, **kwargs)
