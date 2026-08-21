@@ -23,7 +23,6 @@ class Settings(BaseSettings):
     username: str = Field(default="admin", description="Auth Username for the REST API")
     password: str = Field(default="password123", description="Auth Password for the REST API")
     timeout_seconds: float = Field(default=10.0, gt=0, le=60)
-    max_retries: int = Field(default=3, gt=0, le=10)
 
     @model_validator(mode="after")
     def _reject_unknown_prefixed_env_vars(self) -> "Settings":
