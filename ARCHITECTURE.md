@@ -1,6 +1,5 @@
 # Architecture & Design Decisions
 
-# Architecture
 
 **Status:** in active development.  Config and scaffolding are in place.
 
@@ -54,7 +53,7 @@ installed package.
 
 ---
 
-# 2. Toolchain
+## 2. Toolchain
 
 | Choice          | Over                             | Reasoning                                                                               |
 |-----------------|----------------------------------|-----------------------------------------------------------------------------------------|
