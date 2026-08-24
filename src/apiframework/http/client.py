@@ -10,6 +10,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from apiframework.config.settings import Settings, get_settings
 from apiframework.http.auth import AuthProvider
+from apiframework.http.factory import build_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -43,16 +44,7 @@ class ApiClient:
     ) -> None:
         self._settings = settings or get_settings()
         self._auth_provider = auth_provider or AuthProvider(self._settings)
-        self._client = httpx.Client(
-            base_url=str(self._settings.base_url),
-            timeout=httpx.Timeout(
-                connect=5.0,
-                read=self._settings.timeout_seconds,
-                write=5.0,
-                pool=5.0,
-            ),
-            follow_redirects=False,
-        )
+        self._client = build_http_client(self._settings)
 
     def __enter__(self) -> Self:
         return self
