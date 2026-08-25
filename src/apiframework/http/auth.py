@@ -4,9 +4,8 @@ import logging
 from types import TracebackType
 from typing import Self
 
-import httpx
-
 from apiframework.config.settings import Settings, get_settings
+from apiframework.http.factory import build_http_client
 from apiframework.models.booking import AuthRequest, AuthResponse
 
 logger = logging.getLogger(__name__)
@@ -22,16 +21,7 @@ class AuthProvider:
     def __init__(self, settings: Settings | None = None) -> None:
         self._settings = settings or get_settings()
         self._token: str | None = None
-        self._client = httpx.Client(
-            base_url=str(self._settings.base_url),
-            timeout=httpx.Timeout(
-                connect=5.0,
-                read=self._settings.timeout_seconds,
-                write=5.0,
-                pool=5.0,
-            ),
-            follow_redirects=False,
-        )
+        self._client = build_http_client(self._settings)
 
     def __enter__(self) -> Self:
         return self
