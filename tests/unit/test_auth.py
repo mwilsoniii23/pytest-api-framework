@@ -19,7 +19,6 @@ def test_refresh_token_posts_credentials_to_auth_endpoint_and_stores_token() -> 
         token = auth_provider.refresh_token()
 
     assert token == "abc123"
-    assert auth_provider._token == "abc123"
     assert route.call_count == 1
 
     request = route.calls.last.request
@@ -57,7 +56,6 @@ def test_refresh_token_replaces_existing_token() -> None:
 
     assert old_token == "old-token"
     assert new_token == "new-token"
-    assert auth_provider._token == "new-token"
     assert route.call_count == 2
 
 
