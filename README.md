@@ -4,19 +4,19 @@ Production-grade Python API test framework - pytest, httpx, pydantic contract va
 
 **Status:** IN ACTIVE DEVELOPMENT
 
-[x] Config
-[x] HTTP Client
-[x] Auth
-[x] Models
-[ ] unit tests
-[ ] integration tests
-[ ] contract validation
-[x] logging
-[ ] service layer
-[ ] BDD
-[ ] Docker
-[ ] CI/CD
-[ ] Reporting
+- [x] Config
+- [x] HTTP Client
+- [x] Auth
+- [x] Models
+- [x] unit tests
+- [ ] integration tests
+- [x] contract validation
+- [ ] logging
+- [ ] service layer
+- [ ] BDD
+- [ ] Docker
+- [ ] CI/CD
+- [ ] Reporting
 
 ## Quickstart
 
