@@ -58,7 +58,7 @@ class ApiClient:
         self._client.close()
         self._auth_provider.close()
 
-    @retry(  # type: ignore[misc]
+    @retry(
         retry=retry_if_exception_type(TRANSIENT),
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=0.5, max=4),
