@@ -33,8 +33,7 @@ class Settings(BaseSettings):
         )
         if unknown:
             raise ValueError(
-                f"Unrecognized {prefix}* environment variables: {unknown}. "
-                f"Known: {sorted(known)}"
+                f"Unrecognized {prefix}* environment variables: {unknown}. Known: {sorted(known)}"
             )
         return self
 
