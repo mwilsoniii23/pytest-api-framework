@@ -46,6 +46,20 @@ class Booking(ApiModel):
     additionalneeds: str | None = None
 
 
+class PartialBooking(ApiModel):
+    """Partial booking payload for PATCH /booking/{id}.
+
+    Every field is optional because PATCH can update any subset of booking fields.
+    """
+
+    firstname: str | None = None
+    lastname: str | None = None
+    totalprice: int | None = None
+    depositpaid: bool | None = None
+    booking_dates: BookingDates | None = Field(default=None, alias="bookingdates")
+    additionalneeds: str | None = None
+
+
 class CreateBookingResponse(ApiModel):
     """Response envelope returned by POST /booking.
 
