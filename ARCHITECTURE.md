@@ -9,7 +9,7 @@
 - [ ] test suites
 - [ ] reporting
 
-Decisions below reflect what exists today.
+The decisions below reflect what exists today.
 
 ---
 ## 1. Project layout
@@ -18,7 +18,9 @@ src/apiframework/
   config/
   http/
   models/
+  services/
 tests/
+  fucntional/
   unit/
 ```
 
@@ -32,7 +34,7 @@ should surface on commits rather than at distribution time.
 
 ### Package configuration
 
-The project is an installable package, and uses [pyproject.toml](https://www.python.org/dev/peps/pep-0518/) for configuration.
+The project is an installable package and uses [pyproject.toml](https://www.python.org/dev/peps/pep-0518/) for configuration.
 
 ```toml
 [build-system]
@@ -52,8 +54,15 @@ installed package.
     It substitutes a test-runner setting for package configuration and hides the problem rather than fixing it.
 
 ---
+## 2. Scaffolding
 
-## 2. Toolchain
+```
+uv init --python 3.12
+uv add --dev PyTest pytest-cov ruff mypy pre-commit
+uv add httpx pydantic pydantic-settings
+```
+
+## 3. Toolchain
 
 | Choice          | Over                             | Reasoning                                                                               |
 |-----------------|----------------------------------|-----------------------------------------------------------------------------------------|
@@ -78,27 +87,28 @@ since that version will be the most widely compatible.
 ### Lint rule selection
 
 ```toml
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
 [tool.ruff.lint]
-select = [
-    "E",
-    "F",
-    "I",
-    "N",
-    "UP",
-    "B",
-    "SIM"
-    ]
+select = ["E","F","I","N","UP","B","SIM"]
 ```
+`E` (all errors) is the default.
+`F` (all formatting) is the default.
+`I` (imports) is the default.
+`N` (naming) is the default.
+`SIM` (similarities) is the default.
 `B` (bugbear) catches defect-patterns -- mutable default arguments, loop variable binding in closures.
-and `UP` (pyupgrade) rewrites outdated syntax automagically.
+`UP` (pyupgrade) rewrites outdated syntax automagically.
 
 ---
 
-## 3. Quality Gates
+## 4. Quality Gates
 
 ### Pre-commit
 
-`ruff` (with `--fix`), `ruff-format`, `mypy`, and 'gitleaks` run on every commit.
+`ruff` (with `--fix`), `ruff-format`, `mypy`, and `gitleaks` run on every commit.
 
 ### Gitleaks
 
@@ -111,7 +121,7 @@ adopts = "-ra --strict-markers"
 ```
 
 `--strict-markers` turns an undeclared marker into an error.
-A typo'd marker otherwise silently fails and reports a SUCCESS – a false green run
+A typo marker otherwise silently fails and reports a SUCCESS – a false green run
 
 `-ra` reports skips and xfails in the summary, so tests that aren't running are visible rather than buried.
 
@@ -120,7 +130,7 @@ check that isn't checking anything.
 
 ---
 
-## 4. Type checking
+## 5. Type checking
 
 `mypy` runs in `strict` mode on every commit, checking for type errors.
 
@@ -144,3 +154,31 @@ In designing the pydantic models for booking payloads, I considered the followin
 Therefore, unknown fields in a response are flagged as errors.  This allows for schema drift detection.
 The tradeoff is that the test runs may be more brittle as unknown changes to the payloads will cause test failures.
 That's as it should be, though.
+
+
+## 6. Service layer
+
+Establish a `BookingService` class with methods:
+    - `list_booking_ids`
+    - `create_booking`
+    - `get_booking`
+    - `update_booking`
+    - `partial_update_booking`
+    - `delete_booking`
+
+Raise on non-2xx, drop to the client for negative tests. 
+Service layer is the happy path; negative tests use ApiClient directly.
+
+`booking_service.py`
+This covers the booking service operations:
+    1. `list_booking_ids()` — `GET /booking`
+    2. `list_booking_ids(firstname=...)` — filtered `GET /booking`
+    3. `list_booking_ids(lastname=...)`
+    4. `list_booking_ids(checkin=...)`
+    5. `list_booking_ids(checkout=...)`
+    6. `get_booking()` — `GET /booking/{id}`
+    7. `create_booking()` / `update_booking()` / `partial_update_booking()` / `delete_booking()` for the remaining booking workflow operations
+
+For acceptance criteria around auth headers:
+    - `list_booking_ids`, `get_booking`, and `create_booking` use unauthenticated / , so they should not send `Cookie`. `get``post`
+    - `update_booking`, `partial_update_booking`, and `delete_booking` use / / , which route through `ApiClient.authenticated_request()` and send `Cookie: token=...`. `put``patch``delete`
