@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
+import httpx
 import pytest
 
 from apiframework.models.booking import (
@@ -15,7 +16,7 @@ from apiframework.models.booking import (
     CreateBookingResponse,
     PartialBooking,
 )
-from apiframework.services.booking_service import BookingService
+from apiframework.services.booking_service import BookingApiError, BookingService
 
 
 @dataclass
@@ -26,12 +27,27 @@ class RecordedCall:
 
 
 class StubResponse:
-    def __init__(self, payload: Any = None) -> None:
+    def __init__(self, payload: Any = None, status_code: int = 200) -> None:
         self._payload = payload
+        self.status_code = status_code
+        self.text = str(payload)
         self.raise_for_status_call_count = 0
 
     def raise_for_status(self) -> None:
         self.raise_for_status_call_count += 1
+
+        if self.status_code >= 400:
+            request = httpx.Request("GET", "https://example.test/booking")
+            response = httpx.Response(
+                status_code=self.status_code,
+                request=request,
+                text=self.text,
+            )
+            raise httpx.HTTPStatusError(
+                message=f"Error response {self.status_code}",
+                request=request,
+                response=response,
+            )
 
     def json(self) -> Any:
         return self._payload
@@ -253,4 +269,18 @@ def test_delete_booking_raises_for_status_and_returns_none(
             kwargs={"headers": {"Accept": "application/json"}},
         )
     ]
+    assert stub_client.next_response.raise_for_status_call_count == 1
+
+
+def test_get_booking_raises_booking_api_error_with_response(
+    stubbed_booking_service: BookingService,
+    stub_client: StubApiClient,
+) -> None:
+    stub_client.next_response = StubResponse("Not Found", status_code=404)
+
+    with pytest.raises(BookingApiError) as exc_info:
+        stubbed_booking_service.get_booking(999999)
+
+    assert exc_info.value.response.status_code == 404
+    assert exc_info.value.response.text == "Not Found"
     assert stub_client.next_response.raise_for_status_call_count == 1

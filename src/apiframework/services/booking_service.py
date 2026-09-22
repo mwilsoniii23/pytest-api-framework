@@ -4,8 +4,20 @@ from datetime import date
 from types import TracebackType
 from typing import Self
 
+import httpx
+
 from apiframework.http.client import ApiClient
 from apiframework.models.booking import Booking, BookingId, CreateBookingResponse, PartialBooking
+
+
+class BookingApiError(Exception):
+    """Raised when the Booking API returns an unsuccessful response."""
+
+    def __init__(self, response: httpx.Response) -> None:
+        self.response = response
+        super().__init__(
+            f"Booking API request failed with status: {response.status_code}: {response.text}"
+        )
 
 
 class BookingService:
@@ -52,14 +64,14 @@ class BookingService:
         )
 
         response = self._client.get("/booking", params=params or None)
-        response.raise_for_status()
+        self._raise_for_status(response)
 
         return [BookingId.model_validate(item) for item in response.json()]
 
     def get_booking(self, booking_id: int) -> Booking:
         """Return a booking from GET /booking/{id}"""
         response = self._client.get(f"/booking/{booking_id}")
-        response.raise_for_status()
+        self._raise_for_status(response)
 
         return Booking.model_validate(response.json())
 
@@ -70,7 +82,7 @@ class BookingService:
             headers={"Content-Type": "application/json"},
             json=booking.model_dump(mode="json", by_alias=True),
         )
-        response.raise_for_status()
+        self._raise_for_status(response)
 
         return CreateBookingResponse.model_validate(response.json())
 
@@ -81,7 +93,7 @@ class BookingService:
             headers={"Accept": "application/json", "Content-Type": "application/json"},
             json=booking.model_dump(mode="json", by_alias=True),
         )
-        response.raise_for_status()
+        self._raise_for_status(response)
 
         return Booking.model_validate(response.json())
 
@@ -92,7 +104,7 @@ class BookingService:
             headers={"Accept": "application/json", "Content-Type": "application/json"},
             json=booking.model_dump(mode="json", by_alias=True, exclude_none=True),
         )
-        response.raise_for_status()
+        self._raise_for_status(response)
 
         return Booking.model_validate(response.json())
 
@@ -102,7 +114,14 @@ class BookingService:
             f"/booking/{booking_id}",
             headers={"Accept": "application/json"},
         )
-        response.raise_for_status()
+        self._raise_for_status(response)
+
+    @staticmethod
+    def _raise_for_status(response: httpx.Response) -> None:
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise BookingApiError(response) from exc
 
     @staticmethod
     def _build_booking_id_query_params(
