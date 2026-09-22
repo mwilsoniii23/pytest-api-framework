@@ -197,12 +197,11 @@ def test_create_booking_returns_typed_create_booking_response(
             method="POST",
             path="/booking",
             kwargs={
-                "headers": {"Content-Type": "application/json"},
                 "json": booking.model_dump(mode="json", by_alias=True),
             },
         )
     ]
-    assert "Cookie" not in stub_client.calls[0].kwargs["headers"]
+    assert "headers" not in stub_client.calls[0].kwargs
 
 
 def test_update_booking_returns_typed_booking_model(
@@ -220,7 +219,7 @@ def test_update_booking_returns_typed_booking_model(
             method="PUT",
             path="/booking/1",
             kwargs={
-                "headers": {"Accept": "application/json", "Content-Type": "application/json"},
+                "headers": {"Accept": "application/json"},
                 "json": booking.model_dump(mode="json", by_alias=True),
             },
         )
@@ -245,7 +244,7 @@ def test_partial_update_booking_returns_typed_booking_model(
             method="PATCH",
             path="/booking/1",
             kwargs={
-                "headers": {"Accept": "application/json", "Content-Type": "application/json"},
+                "headers": {"Accept": "application/json"},
                 "json": {"firstname": "Jim"},
             },
         )

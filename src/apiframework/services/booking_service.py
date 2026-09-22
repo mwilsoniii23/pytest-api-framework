@@ -93,7 +93,6 @@ class BookingService:
         """Create a booking from POST /booking"""
         response = self._client.post(
             "/booking",
-            headers={"Content-Type": "application/json"},
             json=booking.model_dump(mode="json", by_alias=True),
         )
         self._raise_for_status(response)
@@ -104,7 +103,7 @@ class BookingService:
         """Update a booking from PUT /booking/{id}"""
         response = self._client.put(
             f"/booking/{booking_id}",
-            headers={"Accept": "application/json", "Content-Type": "application/json"},
+            headers={"Accept": "application/json"},
             json=booking.model_dump(mode="json", by_alias=True),
         )
         self._raise_for_status(response)
@@ -115,7 +114,7 @@ class BookingService:
         """Partially update a booking from PATCH /booking/{id}"""
         response = self._client.patch(
             f"/booking/{booking_id}",
-            headers={"Accept": "application/json", "Content-Type": "application/json"},
+            headers={"Accept": "application/json"},
             json=booking.model_dump(mode="json", by_alias=True, exclude_none=True),
         )
         self._raise_for_status(response)
