@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
+import pytest
+
 from apiframework.models.booking import (
     Booking,
     BookingDates,
@@ -61,6 +63,16 @@ class StubApiClient:
         return self.next_response
 
 
+@pytest.fixture
+def stub_client() -> StubApiClient:
+    return StubApiClient()
+
+
+@pytest.fixture
+def stubbed_booking_service(stub_client: StubApiClient) -> BookingService:
+    return BookingService(api_client=stub_client)
+
+
 def make_booking() -> Booking:
     return Booking(
         firstname="Jim",
@@ -75,30 +87,38 @@ def make_booking() -> Booking:
     )
 
 
-def test_list_booking_ids_returns_typed_booking_id_models() -> None:
-    client = StubApiClient()
-    client.next_response = StubResponse(
+def test_list_booking_ids_returns_typed_booking_id_models(
+    stubbed_booking_service: BookingService,
+    stub_client: StubApiClient,
+) -> None:
+    stub_client.next_response = StubResponse(
         [
             BookingId(bookingid=1).model_dump(mode="json"),
             BookingId(bookingid=2).model_dump(mode="json"),
         ]
     )
 
-    service = BookingService(api_client=client)
-
-    booking_ids = service.list_booking_ids()
+    booking_ids = stubbed_booking_service.list_booking_ids()
 
     assert booking_ids == [BookingId(bookingid=1), BookingId(bookingid=2)]
-    assert "headers" not in client.calls[0].kwargs
+    assert stub_client.calls == [
+        RecordedCall(
+            method="GET",
+            path="/booking",
+            kwargs={"params": None},
+        )
+    ]
+    assert stub_client.next_response.raise_for_status_call_count == 1
+    assert "headers" not in stub_client.calls[0].kwargs
 
 
-def test_list_booking_ids_sends_optional_query_params() -> None:
-    client = StubApiClient()
-    client.next_response = StubResponse([BookingId(bookingid=1).model_dump(mode="json")])
+def test_list_booking_ids_sends_optional_query_params(
+    stubbed_booking_service: BookingService,
+    stub_client: StubApiClient,
+) -> None:
+    stub_client.next_response = StubResponse([BookingId(bookingid=1).model_dump(mode="json")])
 
-    service = BookingService(api_client=client)
-
-    booking_ids = service.list_booking_ids(
+    booking_ids = stubbed_booking_service.list_booking_ids(
         firstname="Jim",
         lastname="Brown",
         checkin=date(2026, 1, 1),
@@ -106,7 +126,7 @@ def test_list_booking_ids_sends_optional_query_params() -> None:
     )
 
     assert booking_ids == [BookingId(bookingid=1)]
-    assert client.calls == [
+    assert stub_client.calls == [
         RecordedCall(
             method="GET",
             path="/booking",
@@ -120,42 +140,46 @@ def test_list_booking_ids_sends_optional_query_params() -> None:
             },
         )
     ]
-    assert "headers" not in client.calls[0].kwargs
+    assert "headers" not in stub_client.calls[0].kwargs
 
 
-def test_get_booking_returns_typed_booking_model() -> None:
-    client = StubApiClient()
+def test_get_booking_returns_typed_booking_model(
+    stubbed_booking_service: BookingService,
+    stub_client: StubApiClient,
+) -> None:
     expected_booking = make_booking()
-    client.next_response = StubResponse(expected_booking.model_dump(mode="json", by_alias=True))
+    stub_client.next_response = StubResponse(
+        expected_booking.model_dump(mode="json", by_alias=True)
+    )
 
-    service = BookingService(api_client=client)
-
-    booking = service.get_booking(1)
+    booking = stubbed_booking_service.get_booking(1)
 
     assert booking == expected_booking
-    assert client.calls == [
+    assert stub_client.calls == [
         RecordedCall(
             method="GET",
             path="/booking/1",
             kwargs={},
         )
     ]
-    assert client.next_response.raise_for_status_call_count == 1
-    assert "headers" not in client.calls[0].kwargs
+    assert stub_client.next_response.raise_for_status_call_count == 1
+    assert "headers" not in stub_client.calls[0].kwargs
 
 
-def test_create_booking_returns_typed_create_booking_response() -> None:
-    client = StubApiClient()
+def test_create_booking_returns_typed_create_booking_response(
+    stubbed_booking_service: BookingService,
+    stub_client: StubApiClient,
+) -> None:
     booking = make_booking()
     expected_response = CreateBookingResponse(bookingid=1, booking=booking)
-    client.next_response = StubResponse(expected_response.model_dump(mode="json", by_alias=True))
+    stub_client.next_response = StubResponse(
+        expected_response.model_dump(mode="json", by_alias=True)
+    )
 
-    service = BookingService(api_client=client)
-
-    response = service.create_booking(booking)
+    response = stubbed_booking_service.create_booking(booking)
 
     assert response == expected_response
-    assert client.calls == [
+    assert stub_client.calls == [
         RecordedCall(
             method="POST",
             path="/booking",
@@ -165,20 +189,20 @@ def test_create_booking_returns_typed_create_booking_response() -> None:
             },
         )
     ]
-    assert "Cookie" not in client.calls[0].kwargs["headers"]
+    assert "Cookie" not in stub_client.calls[0].kwargs["headers"]
 
 
-def test_update_booking_returns_typed_booking_model() -> None:
-    client = StubApiClient()
+def test_update_booking_returns_typed_booking_model(
+    stubbed_booking_service: BookingService,
+    stub_client: StubApiClient,
+) -> None:
     booking = make_booking()
-    client.next_response = StubResponse(booking.model_dump(mode="json", by_alias=True))
+    stub_client.next_response = StubResponse(booking.model_dump(mode="json", by_alias=True))
 
-    service = BookingService(api_client=client)
-
-    updated_booking = service.update_booking(1, booking)
+    updated_booking = stubbed_booking_service.update_booking(1, booking)
 
     assert updated_booking == booking
-    assert client.calls == [
+    assert stub_client.calls == [
         RecordedCall(
             method="PUT",
             path="/booking/1",
@@ -190,18 +214,20 @@ def test_update_booking_returns_typed_booking_model() -> None:
     ]
 
 
-def test_partial_update_booking_returns_typed_booking_model() -> None:
-    client = StubApiClient()
+def test_partial_update_booking_returns_typed_booking_model(
+    stubbed_booking_service: BookingService,
+    stub_client: StubApiClient,
+) -> None:
     expected_booking = make_booking()
     partial_booking = PartialBooking(firstname="Jim")
-    client.next_response = StubResponse(expected_booking.model_dump(mode="json", by_alias=True))
+    stub_client.next_response = StubResponse(
+        expected_booking.model_dump(mode="json", by_alias=True)
+    )
 
-    service = BookingService(api_client=client)
-
-    booking = service.partial_update_booking(1, partial_booking)
+    booking = stubbed_booking_service.partial_update_booking(1, partial_booking)
 
     assert booking == expected_booking
-    assert client.calls == [
+    assert stub_client.calls == [
         RecordedCall(
             method="PATCH",
             path="/booking/1",
@@ -213,19 +239,18 @@ def test_partial_update_booking_returns_typed_booking_model() -> None:
     ]
 
 
-def test_delete_booking_raises_for_status_and_returns_none() -> None:
-    client = StubApiClient()
-
-    service = BookingService(api_client=client)
-
-    result = service.delete_booking(1)
+def test_delete_booking_raises_for_status_and_returns_none(
+    stubbed_booking_service: BookingService,
+    stub_client: StubApiClient,
+) -> None:
+    result = stubbed_booking_service.delete_booking(1)
 
     assert result is None
-    assert client.calls == [
+    assert stub_client.calls == [
         RecordedCall(
             method="DELETE",
             path="/booking/1",
             kwargs={"headers": {"Accept": "application/json"}},
         )
     ]
-    assert client.next_response.raise_for_status_call_count == 1
+    assert stub_client.next_response.raise_for_status_call_count == 1
