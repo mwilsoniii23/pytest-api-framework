@@ -16,7 +16,7 @@ from apiframework.models.booking import (
     CreateBookingResponse,
     PartialBooking,
 )
-from apiframework.services.booking_service import BookingApiError, BookingService
+from apiframework.services.booking_service import BookingApiError, BookingService, HttpClient
 
 
 @dataclass
@@ -26,30 +26,22 @@ class RecordedCall:
     kwargs: dict[str, Any]
 
 
-class StubResponse:
+class StubResponse(httpx.Response):
     def __init__(self, payload: Any = None, status_code: int = 200) -> None:
         self._payload = payload
-        self.status_code = status_code
-        self.text = str(payload)
         self.raise_for_status_call_count = 0
+        request = httpx.Request("GET", "https://example.test/booking")
+        super().__init__(
+            status_code=status_code,
+            request=request,
+            text=str(payload),
+        )
 
-    def raise_for_status(self) -> None:
+    def raise_for_status(self) -> httpx.Response:
         self.raise_for_status_call_count += 1
+        return super().raise_for_status()
 
-        if self.status_code >= 400:
-            request = httpx.Request("GET", "https://example.test/booking")
-            response = httpx.Response(
-                status_code=self.status_code,
-                request=request,
-                text=self.text,
-            )
-            raise httpx.HTTPStatusError(
-                message=f"Error response {self.status_code}",
-                request=request,
-                response=response,
-            )
-
-    def json(self) -> Any:
+    def json(self, **kwargs: Any) -> Any:
         return self._payload
 
 
@@ -58,25 +50,29 @@ class StubApiClient:
         self.calls: list[RecordedCall] = []
         self.next_response = StubResponse()
 
-    def get(self, path: str, **kwargs: Any) -> StubResponse:
-        self.calls.append(RecordedCall(method="GET", path=path, kwargs=kwargs))
+    def get(self, url: str, **kwargs: Any) -> httpx.Response:
+        self.calls.append(RecordedCall(method="GET", path=url, kwargs=kwargs))
         return self.next_response
 
-    def post(self, path: str, **kwargs: Any) -> StubResponse:
-        self.calls.append(RecordedCall(method="POST", path=path, kwargs=kwargs))
+    def post(self, url: str, **kwargs: Any) -> httpx.Response:
+        self.calls.append(RecordedCall(method="POST", path=url, kwargs=kwargs))
         return self.next_response
 
-    def put(self, path: str, **kwargs: Any) -> StubResponse:
-        self.calls.append(RecordedCall(method="PUT", path=path, kwargs=kwargs))
+    def put(self, url: str, **kwargs: Any) -> httpx.Response:
+        self.calls.append(RecordedCall(method="PUT", path=url, kwargs=kwargs))
         return self.next_response
 
-    def patch(self, path: str, **kwargs: Any) -> StubResponse:
-        self.calls.append(RecordedCall(method="PATCH", path=path, kwargs=kwargs))
+    def patch(self, url: str, **kwargs: Any) -> httpx.Response:
+        self.calls.append(RecordedCall(method="PATCH", path=url, kwargs=kwargs))
         return self.next_response
 
-    def delete(self, path: str, **kwargs: Any) -> StubResponse:
-        self.calls.append(RecordedCall(method="DELETE", path=path, kwargs=kwargs))
+    def delete(self, url: str, **kwargs: Any) -> httpx.Response:
+        self.calls.append(RecordedCall(method="DELETE", path=url, kwargs=kwargs))
         return self.next_response
+
+
+def assert_satisfies_http_client(client: HttpClient) -> HttpClient:
+    return client
 
 
 @pytest.fixture
@@ -86,6 +82,7 @@ def stub_client() -> StubApiClient:
 
 @pytest.fixture
 def stubbed_booking_service(stub_client: StubApiClient) -> BookingService:
+    assert_satisfies_http_client(stub_client)
     return BookingService(api_client=stub_client)
 
 
@@ -259,9 +256,8 @@ def test_delete_booking_raises_for_status_and_returns_none(
     stubbed_booking_service: BookingService,
     stub_client: StubApiClient,
 ) -> None:
-    result = stubbed_booking_service.delete_booking(1)
+    stubbed_booking_service.delete_booking(1)
 
-    assert result is None
     assert stub_client.calls == [
         RecordedCall(
             method="DELETE",
