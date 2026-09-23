@@ -24,7 +24,7 @@ class StubAuthProvider:
         self.close_call_count += 1
 
 
-@respx.mock  # type: ignore[misc]
+@respx.mock
 def test_retries_transient_error() -> None:
     route = respx.get("/booking").mock(
         side_effect=[httpx.ConnectError("boom"), httpx.Response(200, json=[])]
@@ -37,7 +37,7 @@ def test_retries_transient_error() -> None:
     assert route.call_count == 2
 
 
-@respx.mock  # type: ignore[misc]
+@respx.mock
 def test_does_not_retry_server_error() -> None:
     route = respx.get("/booking").mock(return_value=httpx.Response(500))
 
@@ -48,7 +48,7 @@ def test_does_not_retry_server_error() -> None:
     assert route.call_count == 1
 
 
-@respx.mock  # type: ignore[misc]
+@respx.mock
 def test_put_sends_cached_token_in_cookie_header() -> None:
     auth_provider = StubAuthProvider()
     route = respx.put("/booking/1").mock(return_value=httpx.Response(200, json={}))
@@ -62,7 +62,7 @@ def test_put_sends_cached_token_in_cookie_header() -> None:
     assert route.calls.last.request.headers["Cookie"] == "token=cached-token"
 
 
-@respx.mock  # type: ignore[misc]
+@respx.mock
 def test_patch_sends_cached_token_in_cookie_header() -> None:
     auth_provider = StubAuthProvider()
     route = respx.patch("booking/1").mock(return_value=httpx.Response(200, json={}))

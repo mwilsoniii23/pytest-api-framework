@@ -49,14 +49,17 @@ class ApiClient:
     def __enter__(self) -> Self:
         return self
 
+    def close(self) -> None:
+        self._client.close()
+        self._auth_provider.close()
+
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
         exc: BaseException | None,
         tb: TracebackType | None,
     ) -> None:
-        self._client.close()
-        self._auth_provider.close()
+        self.close()
 
     @retry(
         retry=retry_if_exception_type(TRANSIENT),

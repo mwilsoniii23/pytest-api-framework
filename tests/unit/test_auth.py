@@ -10,7 +10,7 @@ from apiframework.config.settings import Settings
 from apiframework.http.auth import AuthProvider
 
 
-@respx.mock  # type: ignore[misc]
+@respx.mock
 def test_refresh_token_posts_credentials_to_auth_endpoint_and_stores_token() -> None:
     route = respx.post("/auth").mock(return_value=httpx.Response(200, json={"token": "abc123"}))
     settings = Settings(username="admin", password="password123")
@@ -26,7 +26,7 @@ def test_refresh_token_posts_credentials_to_auth_endpoint_and_stores_token() -> 
     assert request.read() == b'{"username":"admin","password":"password123"}'
 
 
-@respx.mock  # type: ignore[misc]
+@respx.mock
 def test_get_token_returns_cached_token_without_calling_auth_endpoint() -> None:
     route = respx.post("/auth").mock(return_value=httpx.Response(200, json={"token": "abc123"}))
     settings = Settings(username="admin", password="password123")
@@ -40,7 +40,7 @@ def test_get_token_returns_cached_token_without_calling_auth_endpoint() -> None:
     assert route.call_count == 1
 
 
-@respx.mock  # type: ignore[misc]
+@respx.mock
 def test_refresh_token_replaces_existing_token() -> None:
     route = respx.post("/auth").mock(
         side_effect=[
@@ -59,7 +59,7 @@ def test_refresh_token_replaces_existing_token() -> None:
     assert route.call_count == 2
 
 
-@respx.mock  # type: ignore[misc]
+@respx.mock
 def test_refresh_token_raises_for_auth_http_error() -> None:
     respx.post("/auth").mock(return_value=httpx.Response(401, json={"reason": "Bad credentials"}))
     settings = Settings(username="admin", password="password123")
@@ -68,7 +68,7 @@ def test_refresh_token_raises_for_auth_http_error() -> None:
         auth_provider.refresh_token()
 
 
-@respx.mock  # type: ignore[misc]
+@respx.mock
 def test_refresh_token_does_not_log_credentials(caplog: pytest.LogCaptureFixture) -> None:
     respx.post("/auth").mock(return_value=httpx.Response(200, json={"token": "abc123"}))
     settings = Settings(username="admin", password="password123")
