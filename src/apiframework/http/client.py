@@ -34,6 +34,18 @@ class TokenProvider(Protocol):
         ...
 
 
+'''
+class HttpClient(Protocol):
+    """HTTP behavior required by service-layer classes."""
+
+    def get(self, url: str, **kwargs: Any) -> httpx.Response: ...
+    def post(self, url: str, **kwargs: Any) -> httpx.Response: ...
+    def put(self, url: str, **kwargs: Any) -> httpx.Response: ...
+    def patch(self, url: str, **kwargs: Any) -> httpx.Response: ...
+    def delete(self, url: str, **kwargs: Any) -> httpx.Response: ...
+'''
+
+
 class ApiClient:
     """Thin, observable HTTP client. Retries transport faults, never status codes."""
 
@@ -49,14 +61,17 @@ class ApiClient:
     def __enter__(self) -> Self:
         return self
 
+    def close(self) -> None:
+        self._client.close()
+        self._auth_provider.close()
+
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
         exc: BaseException | None,
         tb: TracebackType | None,
     ) -> None:
-        self._client.close()
-        self._auth_provider.close()
+        self.close()
 
     @retry(
         retry=retry_if_exception_type(TRANSIENT),

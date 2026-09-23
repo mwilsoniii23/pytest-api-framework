@@ -2,7 +2,7 @@
 
 from datetime import date
 from types import TracebackType
-from typing import Any, Protocol, Self, cast
+from typing import Any, Protocol, Self
 
 import httpx
 
@@ -37,9 +37,17 @@ class BookingApiError(Exception):
 class BookingService:
     """Typed service layer for Restful Booker booking operations."""
 
+    _client: HttpClient
+    _owned_client: ApiClient | None
+
     def __init__(self, api_client: HttpClient | None = None) -> None:
-        self._client = api_client or ApiClient()
-        self._owns_client = api_client is None
+        if api_client is None:
+            owned = ApiClient()
+            self._owned_client = owned
+            self._client = owned
+        else:
+            self._owned_client = None
+            self._client = api_client
 
     def __enter__(self) -> Self:
         return self
@@ -54,8 +62,8 @@ class BookingService:
 
     def close(self) -> None:
         """Close owned HTTP resources."""
-        if self._owns_client:
-            cast(ApiClient, self._client).__exit__(None, None, None)
+        if self._owned_client is not None:
+            self._owned_client.close()
 
     def list_booking_ids(
         self,

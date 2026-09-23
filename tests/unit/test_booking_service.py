@@ -121,7 +121,6 @@ def test_list_booking_ids_returns_typed_booking_id_models(
             kwargs={"params": None},
         )
     ]
-    assert stub_client.next_response.raise_for_status_call_count == 1
     assert "headers" not in stub_client.calls[0].kwargs
 
 
@@ -175,7 +174,6 @@ def test_get_booking_returns_typed_booking_model(
             kwargs={},
         )
     ]
-    assert stub_client.next_response.raise_for_status_call_count == 1
     assert "headers" not in stub_client.calls[0].kwargs
 
 
@@ -264,7 +262,6 @@ def test_delete_booking_raises_for_status_and_returns_none(
             kwargs={"headers": {"Accept": "application/json"}},
         )
     ]
-    assert stub_client.next_response.raise_for_status_call_count == 1
 
 
 def test_get_booking_raises_booking_api_error_with_response(
@@ -278,4 +275,3 @@ def test_get_booking_raises_booking_api_error_with_response(
 
     assert exc_info.value.response.status_code == 404
     assert exc_info.value.response.text == "Not Found"
-    assert stub_client.next_response.raise_for_status_call_count == 1

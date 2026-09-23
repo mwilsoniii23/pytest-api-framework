@@ -1,6 +1,6 @@
 # /src/tests/conftest.py
 
-from _collections_abc import Iterator
+from collections.abc import Iterator
 
 import pytest
 
