@@ -12,6 +12,7 @@ from apiframework.models.booking import (
     BookingId,
     CreateBookingResponse,
 )
+from apiframework.support.builders import BookingBuilder
 
 
 def test_booking_dates_parses_iso_strings_to_date_objects() -> None:
@@ -24,13 +25,13 @@ def test_booking_dates_parses_iso_strings_to_date_objects() -> None:
 
 
 def test_booking_accepts_pythonic_booking_dates_field_name() -> None:
-    booking = Booking(
-        firstname="Jim",
-        lastname="Brown",
-        totalprice=111,
-        depositpaid=True,
-        booking_dates=BookingDates(checkin=date(2023, 1, 1), checkout=date(2023, 1, 2)),
-        additionalneeds="Breakfast",
+    booking = (
+        BookingBuilder()
+        .with_firstname("Jim")
+        .with_lastname("Brown")
+        .with_totalprice(111)
+        .with_dates(checkin=date(2023, 1, 1), checkout=date(2023, 1, 2))
+        .build()
     )
 
     assert booking.firstname == "Jim"
@@ -64,13 +65,13 @@ def test_booking_accepts_api_alias_bookingdates_field_name() -> None:
 
 
 def test_booking_serialized_with_api_alias() -> None:
-    booking = Booking(
-        firstname="Jim",
-        lastname="Brown",
-        totalprice=111,
-        depositpaid=True,
-        booking_dates=BookingDates(checkin=date(2023, 1, 1), checkout=date(2023, 1, 2)),
-        additionalneeds="Breakfast",
+    booking = (
+        BookingBuilder()
+        .with_firstname("Jim")
+        .with_lastname("Brown")
+        .with_totalprice(111)
+        .with_dates(checkin=date(2023, 1, 1), checkout=date(2023, 1, 2))
+        .build()
     )
 
     payload = booking.model_dump(mode="json", by_alias=True)
@@ -89,15 +90,17 @@ def test_booking_serialized_with_api_alias() -> None:
 
 
 def test_booking_additional_is_optional_and_can_be_excluded_when_none() -> None:
-    booking = Booking(
-        firstname="Jim",
-        lastname="Brown",
-        totalprice=111,
-        depositpaid=True,
-        booking_dates=BookingDates(
+    booking = (
+        BookingBuilder()
+        .with_firstname("Jim")
+        .with_lastname("Brown")
+        .with_totalprice(111)
+        .with_dates(
             checkin=date(2023, 1, 1),
             checkout=date(2023, 1, 2),
-        ),
+        )
+        .without_additional_needs()
+        .build()
     )
 
     assert booking.additionalneeds is None
