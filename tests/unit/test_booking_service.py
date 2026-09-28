@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 import httpx
@@ -11,12 +11,12 @@ import pytest
 
 from apiframework.models.booking import (
     Booking,
-    BookingDates,
     BookingId,
     CreateBookingResponse,
     PartialBooking,
 )
 from apiframework.services.booking_service import BookingApiError, BookingService, HttpClient
+from apiframework.support.builders import BookingBuilder
 
 
 @dataclass
@@ -87,16 +87,16 @@ def stubbed_booking_service(stub_client: StubApiClient) -> BookingService:
 
 
 def make_booking() -> Booking:
-    return Booking(
-        firstname="Jim",
-        lastname="Brown",
-        totalprice=111,
-        depositpaid=True,
-        booking_dates=BookingDates(
-            checkin=date(2026, 1, 1),
-            checkout=date(2026, 1, 2),
-        ),
-        additionalneeds="Breakfast",
+    return (
+        BookingBuilder()
+        .with_firstname("Jim")
+        .with_lastname("Brown")
+        .with_totalprice(111)
+        .with_dates(
+            checkin=date.today() + timedelta(days=30),
+            checkout=date.today() + timedelta(days=31),
+        )
+        .build()
     )
 
 
@@ -128,13 +128,15 @@ def test_list_booking_ids_sends_optional_query_params(
     stubbed_booking_service: BookingService,
     stub_client: StubApiClient,
 ) -> None:
+    checkin = date.today() + timedelta(days=30)
+    checkout = date.today() + timedelta(days=31)
     stub_client.next_response = StubResponse([BookingId(bookingid=1).model_dump(mode="json")])
 
     booking_ids = stubbed_booking_service.list_booking_ids(
         firstname="Jim",
         lastname="Brown",
-        checkin=date(2026, 1, 1),
-        checkout=date(2026, 1, 2),
+        checkin=checkin,
+        checkout=checkout,
     )
 
     assert booking_ids == [BookingId(bookingid=1)]
@@ -146,8 +148,8 @@ def test_list_booking_ids_sends_optional_query_params(
                 "params": {
                     "firstname": "Jim",
                     "lastname": "Brown",
-                    "checkin": "2026-01-01",
-                    "checkout": "2026-01-02",
+                    "checkin": checkin.isoformat(),
+                    "checkout": checkout.isoformat(),
                 }
             },
         )
