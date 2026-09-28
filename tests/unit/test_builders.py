@@ -35,23 +35,23 @@ def test_build_returns_unique_names() -> None:
 
 
 def test_with_firstname_changes_firstname_only() -> None:
-    original = BookingBuilder().build()
+    builder = BookingBuilder()
+    before = builder.build()
+    after = builder.with_firstname("ExpectedFirst").build()
 
-    booking = BookingBuilder().with_firstname("ExpectedFirst").build()
-
-    assert booking.firstname == "ExpectedFirst"
-    assert booking.lastname != ""
-    assert booking.firstname != original.firstname
+    assert after.firstname == "ExpectedFirst"
+    assert after.lastname == before.lastname
+    assert after.totalprice == before.totalprice
 
 
 def test_with_lastname_changes_lastname_only() -> None:
-    original = BookingBuilder().build()
+    builder = BookingBuilder()
+    before = builder.build()
+    after = builder.with_lastname("ExpectedLast").build()
 
-    booking = BookingBuilder().with_lastname("ExpectedLast").build()
-
-    assert booking.lastname == "ExpectedLast"
-    assert booking.firstname != ""
-    assert booking.lastname != original.lastname
+    assert after.lastname == "ExpectedLast"
+    assert after.firstname == before.firstname
+    assert after.totalprice == before.totalprice
 
 
 def test_with_unique_name_changes_firstname_and_lastname() -> None:
