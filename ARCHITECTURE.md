@@ -51,7 +51,15 @@ installed package.
     It fixes imports for pytest, but nothing else.
     It substitutes a test-runner setting for package configuration and hides the problem rather than fixing it.
 
+
+- updated addopts so that integration tests are NOT run by CI:
+```toml
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers -m 'not integration'"
+```
 ---
+this ensures that CI is responsible for verifying the code, not the third-party API.
+should the uptime go down, CI can still pass (unit tests are stubbed).
 
 ## 2. Toolchain
 
