@@ -144,3 +144,14 @@ In designing the pydantic models for booking payloads, I considered the followin
 Therefore, unknown fields in a response are flagged as errors.  This allows for schema drift detection.
 The tradeoff is that the test runs may be more brittle as unknown changes to the payloads will cause test failures.
 That's as it should be, though.
+
+
+## 5. Test Data Builders
+
+``` bash
+uv add --dev polyfactory
+```
+
+Polyfactory is a library for building test data. It generates a valid instance from the pydantic model automatically.
+Polyfactory is best used when the test doesn't need to care about the values.  
+For instance, "some valid booking exists"...
