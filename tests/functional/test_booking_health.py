@@ -15,3 +15,12 @@ def test_health_check_returns_200() -> None:
         response = client.get("/ping")
 
     assert response.status_code == 200
+
+
+@pytest.mark.integration
+@pytest.mark.xfail(reason="Unsupported HTTP method returns 404; see docs/bugs-found.md #47")
+def test_unsupported_method_trace_returns_405() -> None:
+    with ApiClient() as client:
+        response = client.request("TRACE", "/ping")
+
+    assert response.status_code == 405
