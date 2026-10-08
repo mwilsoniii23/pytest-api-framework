@@ -9,13 +9,17 @@ from apiframework.services.booking_service import BookingApiError, BookingServic
 
 
 @pytest.mark.integration
+@pytest.mark.xfail(
+    reason="additionalneeds is not required in CreateBooking; see docs/bugs-found.md #42",
+    strict=True,
+)
 def test_create_booking_requires_additionalneeds() -> None:
     payload = {
         "firstname": "Jim",
         "lastname": "Brown",
         "totalprice": 111,
         "depositpaid": True,
-        "bookingdates": {"checkin": "2026-10-30", "checkout": "2023-10-31"},
+        "bookingdates": {"checkin": "2026-10-30", "checkout": "2026-10-31"},
     }
 
     with ApiClient() as client, BookingService() as service:

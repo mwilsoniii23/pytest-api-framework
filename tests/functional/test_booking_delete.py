@@ -10,6 +10,10 @@ from apiframework.support.builders import BookingBuilder
 
 
 @pytest.mark.integration
+@pytest.mark.xfail(
+    reason="Booker returns 201 Created on delete; see docs/bugs-found.md #40",
+    strict=True,
+)
 def test_delete_booking_returns_success_status() -> None:
     """DELETE should return 200, 202, or 204 for a successful delete"""
     with BookingService() as service, ApiClient() as client:
