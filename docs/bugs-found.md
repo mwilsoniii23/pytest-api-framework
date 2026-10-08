@@ -7,9 +7,9 @@ Each entry links to the covering regression test.
 |-----------------------------------------------------------------------|----------|---------------|------------------------|------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
 | [#16](https://github.com/mwilsoniii23/pytest-api-framework/issues/16) | 3-Medium | Documentation | `PATCH /booking/{id}`  | Requires an auth token, but the `/auth` documentation lists only PUT and DELETE    | `tests/functional/test_booking_patch.py::test_patch_without_auth_token_is_rejected`     |
 | [#40](https://github.com/mwilsoniii23/pytest-api-framework/issues/40) | 3-Medium | Design        | `DELETE /booking/{id}` | DELETE returns `201 Created`                                                       | `tests/functional/test_booking_delete.py::test_delete_booking_returns_success_status`   |
-| [#41](https://github.com/mwilsoniii23/pytest-api-framework/issues/41) | 3-Medium | Design        | `GET /ping`            | `/ping` returns `201 Created`                                                      | `tests/functional/test_booking_health.py::test_health_check_returns_200`                |
+| [#41](https://github.com/mwilsoniii23/pytest-api-framework/issues/41) | 4-Low    | Design        | `GET /ping`            | `/ping` returns `201 Created`                                                      | `tests/functional/test_booking_health.py::test_health_check_returns_200`                |
 | [#42](https://github.com/mwilsoniii23/pytest-api-framework/issues/42) | 3-Medium | Documentation | `POST /booking/`       | `additionalneeds` is documented as required (`"optional": false`) on CreateBooking | `tests/functional/test_create_booking.py::test_create_booking_requires_additionalneeds` |
-| [#42](https://github.com/mwilsoniii23/pytest-api-framework/issues/42) | 3-Medium | Documentation | `PATCH /booking/{id}`  | The PATCH documentation examples all use `curl -X PUT`                             | ---                                                                                     |
+| [#43](https://github.com/mwilsoniii23/pytest-api-framework/issues/43) | 5-Minor  | Documentation | `PATCH /booking/{id}`  | The PATCH documentation examples all use `curl -X PUT`                             | Not Automatable - documentation only                                                    |
 ---
 
 ## #16 — PATCH requires auth, undocumented
@@ -79,7 +79,7 @@ semantics or an OpenAPI contract.
 
 ## 41 – `/ping` returns `201 Created`
 
-**Severity:** 3-Medium \
+**Severity:** 4-Low \
 **Type:** Design \
 **Endpoint:** `GET /ping`
 
@@ -141,7 +141,7 @@ If additionalneeds is required, booking app should reject the request
 
 ## 43 – The PATCH documentation examples all use `curl -X PUT`
 
-**Severity:** 1-Minor \
+**Severity:** 5-Minor \
 **Type:** Documentation \
 **Endpoint:** `PATCH /booking/{id}`
 
