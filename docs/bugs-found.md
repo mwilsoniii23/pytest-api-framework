@@ -10,6 +10,10 @@ Each entry links to the covering regression test.
 | [#41](https://github.com/mwilsoniii23/pytest-api-framework/issues/41) | 4-Low    | Design        | `GET /ping`            | `/ping` returns `201 Created`                                                      | `tests/functional/test_booking_health.py::test_health_check_returns_200`                |
 | [#42](https://github.com/mwilsoniii23/pytest-api-framework/issues/42) | 3-Medium | Documentation | `POST /booking/`       | `additionalneeds` is documented as required (`"optional": false`) on CreateBooking | `tests/functional/test_create_booking.py::test_create_booking_requires_additionalneeds` |
 | [#43](https://github.com/mwilsoniii23/pytest-api-framework/issues/43) | 5-Minor  | Documentation | `PATCH /booking/{id}`  | The PATCH documentation examples all use `curl -X PUT`                             | Not Automatable - documentation only                                                    |
+| [#45](https://github.com/mwilsoniii23/pytest-api-framework/issues/45) | 3-Medium | Design        | `POST /auth`           | Invalid data returns 200 "Bad Credentials" response                                | `tests/functional/test_auth.py::test_auth_with_invalid_credentials_is_rejected`         |
+| [#46](https://github.com/mwilsoniii23/pytest-api-framework/issues/46) | 3-Medium | Design        | `POST /auth`           | No Payload in request returns 200 "Bad Credentials" response                       | `tests/functional/test_auth.py::test_auth_without_payload_is_rejected`                  |
+| [#47](https://github.com/mwilsoniii23/pytest-api-framework/issues/47) | 5-Minor  | Design        | `GET /ping`            | Unsupported method TRACE returned 404, expected 405 Method Not Allowed             | `tests/functional/test_booking_health.py::test_unsupported_method_trace_returns_405`    |
+| [#48](https://github.com/mwilsoniii23/pytest-api-framework/issues/48) | 2-High   | Design        | `GET /booking`         | An empty `checkout` query parameter crashes the server                             | `tests/functional/test_booking_get_all_bookings_with_empty_checkout_query_parameter.py` |
 ---
 
 ## #16 — PATCH requires auth, undocumented
@@ -33,7 +37,7 @@ curl -i -X PATCH https://restful-booker.herokuapp.com/booking/910 \
 
 **Actual:** `403 Forbidden`. The same request with `Cookie: token=<token>` succeeds.
 
-**Impact:** A developer implementing partial updates from the documented spec gets 403s with no stated cause. The failure gives no indication that authentication is the issue, so the likely debugging path is payload format rather than auth.
+**Impact:** A developer implementing partial updates from the documented spec gets 403 with no stated cause. The failure gives no indication that authentication is the issue, so the likely debugging path is the payload format rather than auth.
 
 **Covered by:** `tests/functional/test_booking_patch.py::test_patch_without_auth_token_is_rejected`
 
@@ -102,7 +106,7 @@ curl --location https://restful-booker.herokuapp.com/ping
 
 ---
 
-## 42 – `additionalneeds` is documented as required ('"optional": false') on CreateBooking
+## 42 – `additionalneeds` is documented as required (`"optional": false`) on CreateBooking
 
 **Severity:** 3-Medium \
 **Type:** Documentation \
@@ -162,7 +166,7 @@ curl -X PATCH https://restful-booker.herokuapp.com/booking/<booking_id> \
 -H "Content-Type: application/json" \
 -H "Accept: application/json" \
 -H "Cookie: token=<auth_token>" \
--d '{"fistname":"James"}'
+-d '{"firstname":"James"}'
 ```
 **Actual:** 
 
@@ -178,5 +182,147 @@ requests if the payload is partial, or confusion while debugging PATCH behavior.
 **Covered by:**
 
 Documentation-only defect; no automated test coverage.
+
+---
+
+## 45 – Invalid data returns 200 "Bad Credentials" response 
+
+**Severity:** 3-Medium \
+**Type:** Design \
+**Endpoint:** `POST /auth`
+
+**Repro**
+
+```bash
+curl --location 'https://restful-booker.herokuapp.com/auth' \
+--header 'Content-Type: application/json' \
+--data '{
+    "username": "",
+    "password": ""
+}'
+```
+
+**Expected:** 
+
+Invalid data should have been rejected \
+Expected: 400, 401, 403, 404, 405, 406, 409, 415, 422, 428, 429, 5xx
+
+**Actual:** 
+
+API accepted the schema-violating request and returned 200 "Bad Credentials" response
+
+[200] OK:
+```json
+{"reason": "Bad credentials"}
+```
+
+**Impact:** 
+
+
+
+**Covered by:**
+
+`tests/functional/test_auth.py::test_auth_with_invalid_credentials_is_rejected` 
+
+---
+
+## 46 – No Payload in request returns 200 "Bad Credentials" response 
+
+**Severity:** 3-Medium \
+**Type:** Design \
+**Endpoint:** `POST /auth`
+
+**Repro**
+
+```bash
+curl --location --request POST 'https://restful-booker.herokuapp.com/auth' \
+--header 'Content-Type: application/json'
+```
+
+**Expected:** 
+
+Invalid data should have been rejected \
+Expected: 400, 401, 403, 404, 405, 406, 409, 415, 422, 428, 429, 5xx
+
+**Actual:** 
+
+API accepted the schema-violating request and returned 200 "Bad Credentials" response
+
+[200] OK:
+```json
+{"reason": "Bad credentials"}
+```
+
+**Impact:** 
+
+
+
+**Covered by:**
+
+`tests/functional/test_auth.py::test_auth_without_payload_is_rejected`
+
+---
+
+## 47 – Unsupported method TRACE returned 404, expected 405 Method Not Allowed 
+
+**Severity:** 5-Minor \
+**Type:** Design \
+**Endpoint:** `GET /ping`
+
+**Repro**
+
+```bash
+curl -X TRACE https://restful-booker.herokuapp.com/ping
+```
+
+**Expected:** 
+
+expected 405 Method Not Allowed \
+Return 405 for methods not listed in the OpenAPI spec
+
+**Actual:** 
+
+Unsupported method TRACE returned 404
+
+[404] Not Found:
+    `Not Found`
+
+**Impact:** 
+
+
+
+**Covered by:**
+
+`tests/functional/test_booking_health.py::test_unsupported_method_trace_returns_405`
+
+---
+
+## 48 – An empty `checkout` query parameter crashes the server
+
+**Severity:** 2-High \
+**Type:** Design \
+**Endpoint:** `GET /booking?checkout=`
+
+**Repro**
+
+```bash
+curl -X GET 'https://restful-booker.herokuapp.com/booking?checkout='
+```
+
+**Expected:** 
+
+Expected `400 - Bad Request`
+
+**Actual:** 
+
+`500 - Internal Server Error`
+
+**Impact:** 
+
+
+
+**Covered by:**
+
+`tests/functional/test_booking_get_all_bookings_with_empty_checkout_query_parameter.py`
 
 ---
