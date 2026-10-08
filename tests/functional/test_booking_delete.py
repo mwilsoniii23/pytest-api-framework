@@ -1,11 +1,10 @@
 # tests/functional/test_booking_delete.py
 
-import contextlib
 
 import pytest
 
 from apiframework.http.client import ApiClient
-from apiframework.services.booking_service import BookingApiError, BookingService
+from apiframework.services.booking_service import BookingService
 from apiframework.support.builders import BookingBuilder
 
 
@@ -25,9 +24,4 @@ def test_delete_booking_returns_success_status() -> None:
             headers={"Accept": "application/json"},
         )
 
-        try:
-            assert response.status_code in (200, 202, 204)
-        finally:
-            if response.status_code not in {200, 202, 204}:
-                with contextlib.suppress(BookingApiError):
-                    service.delete_booking(created.bookingid)
+        assert response.status_code in (200, 202, 204)
