@@ -213,10 +213,15 @@ components:
       name: checkout
       in: query
       required: false
-      description: Filter booking ids by check-out date.
+      description: |
+        Filter booking ids by check-out date. Returns booking with a checkout date greater than or equal to this value.
+        Format must be CCYY-MM-DD.
       schema:
         type: string
         format: date
+        pattern: '^\d{4}-\d{2}-\d{2}$'
+        minLength: 10
+        maxLength: 10
 
 paths:
   /auth:
