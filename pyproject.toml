@@ -45,6 +45,7 @@ addopts = "-ra --strict-markers -m 'not integration'"
 markers = [
     "integration: hits the real system under test; excluded from the default run",
 ]
+xfail_strict = true
 
 [build-system]
 requires = ["hatchling"]
