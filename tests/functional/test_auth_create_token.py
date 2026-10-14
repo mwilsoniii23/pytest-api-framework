@@ -1,4 +1,4 @@
-# tests/functional/test_auth.py
+# tests/functional/test_auth_create_token.py
 
 
 import pytest
@@ -41,7 +41,7 @@ def test_auth_with_invalid_credentials_is_rejected() -> None:
 @pytest.mark.integration
 @pytest.mark.xfail(
     reason="Auth endpoint returns 200 OK when request missing required payload; "
-    "see docs/bugs-found.md #46"
+    "see docs/bugs-found.md #45"
 )
 def test_auth_without_payload_is_rejected() -> None:
     with ApiClient() as client:
