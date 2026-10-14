@@ -8,12 +8,12 @@ Each entry links to the covering regression test.
 | [#16](https://github.com/mwilsoniii23/pytest-api-framework/issues/16) | 3-Medium | Documentation | `PATCH /booking/{id}`  | Requires an auth token, but the `/auth` documentation lists only PUT and DELETE    | `tests/functional/test_booking_patch.py::test_patch_without_auth_token_is_rejected`          |
 | [#40](https://github.com/mwilsoniii23/pytest-api-framework/issues/40) | 3-Medium | Design        | `DELETE /booking/{id}` | DELETE returns `201 Created`                                                       | `tests/functional/test_booking_delete.py::test_delete_booking_returns_success_status`        |
 | [#41](https://github.com/mwilsoniii23/pytest-api-framework/issues/41) | 4-Low    | Design        | `GET /ping`            | `/ping` returns `201 Created`                                                      | `tests/functional/test_booking_health.py::test_health_check_returns_200`                     |
-| [#42](https://github.com/mwilsoniii23/pytest-api-framework/issues/42) | 3-Medium | Documentation | `POST /booking/`       | `additionalneeds` is documented as required (`"optional": false`) on CreateBooking | `tests/functional/test_create_booking.py::test_create_booking_requires_additionalneeds`      |
+| [#42](https://github.com/mwilsoniii23/pytest-api-framework/issues/42) | 3-Medium | Documentation | `POST /booking`        | `additionalneeds` is documented as required (`"optional": false`) on CreateBooking | `tests/functional/test_create_booking.py::test_create_booking_requires_additionalneeds`      |
 | [#43](https://github.com/mwilsoniii23/pytest-api-framework/issues/43) | 5-Minor  | Documentation | `PATCH /booking/{id}`  | The PATCH documentation examples all use `curl -X PUT`                             | Not Automatable - documentation only                                                         |
 | [#45](https://github.com/mwilsoniii23/pytest-api-framework/issues/45) | 2-High   | Design        | `POST /auth`           | `POST /auth` returns `200 OK` on failed authentication                             | `tests/functional/test_auth_create_token.py::test_auth_with_invalid_credentials_is_rejected` |
-| [#49](https://github.com/mwilsoniii23/pytest-api-framework/issues/49) | 2-High   | Design        | `POST /booking`        | `POST /booking` with no body causes an unhandled server error                      | `tests/functional/test_create_booking.py::test_create_booking_with_no_payload_is_rejected`   |
 | [#47](https://github.com/mwilsoniii23/pytest-api-framework/issues/47) | 5-Minor  | Design        | `GET /ping`            | Unsupported method TRACE returned 404, expected 405 Method Not Allowed             | `tests/functional/test_booking_health.py::test_unsupported_method_trace_returns_405`         |
 | [#48](https://github.com/mwilsoniii23/pytest-api-framework/issues/48) | 2-High   | Design        | `GET /booking`         | Non-date values in `checkin`/`checkout` cause an unhandled server error            | `tests/functional/test_get_booking.py::test_empty_checkout_param_is_rejected`                |
+| [#49](https://github.com/mwilsoniii23/pytest-api-framework/issues/49) | 2-High   | Design        | `POST /booking`        | `POST /booking` with no body causes an unhandled server error                      | `tests/functional/test_create_booking.py::test_create_booking_with_no_payload_is_rejected`   |
 ---
 
 ## #16 — PATCH requires auth, undocumented
@@ -234,39 +234,6 @@ A client reading `response.json()["token"]` gets a `KeyError` instead of a clear
 
 ---
 
-## 49 – `POST /booking` with no body causes an unhandled server error 
-
-**Severity:** 2-High \
-**Type:** Design \
-**Endpoint:** `POST /booking`
-
-**Repro**
-
-```bash
-curl --location --request POST 'https://restful-booker.herokuapp.com/booking' \
---header 'Content-Type: application/json'
-```
-
-**Expected:** 
-
-Invalid data should have been rejected \
-Expected: 400, 401, 403, 404, 405, 406, 409, 415, 422, 428, 429, 5xx
-
-**Actual:** 
-
-`500 - Internal Server Error`
-
-
-**Impact:** 
-
-
-
-**Covered by:**
-
-`tests/functional/test_create_booking.py::test_create_booking_with_no_payload_is_rejected`
-
----
-
 ## 47 – Unsupported method TRACE returned 404, expected 405 Method Not Allowed 
 
 **Severity:** 5-Minor \
@@ -328,5 +295,38 @@ Expected `400 - Bad Request`
 **Covered by:**
 
 `tests/functional/test_get_booking.py::test_empty_checkout_param_is_rejected`
+
+---
+
+## 49 – `POST /booking` with no body causes an unhandled server error 
+
+**Severity:** 2-High \
+**Type:** Design \
+**Endpoint:** `POST /booking`
+
+**Repro**
+
+```bash
+curl --location --request POST 'https://restful-booker.herokuapp.com/booking' \
+--header 'Content-Type: application/json'
+```
+
+**Expected:** 
+
+Invalid data should have been rejected \
+Expected: 400, 401, 403, 404, 405, 406, 409, 415, 422, 428, 429, 5xx
+
+**Actual:** 
+
+`500 - Internal Server Error`
+
+
+**Impact:** 
+
+
+
+**Covered by:**
+
+`tests/functional/test_create_booking.py::test_create_booking_with_no_payload_is_rejected`
 
 ---
