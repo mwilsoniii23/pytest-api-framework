@@ -8,6 +8,7 @@ dependencies = [
     "pydantic>=2.13.4",
     "pydantic-settings>=2.15.0",
     "tenacity>=9.1.4",
+    "types-pyyaml>=6.0.12.20260906",
 ]
 
 [dependency-groups]
@@ -19,6 +20,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "respx>=0.23.1",
     "ruff>=0.16.3",
+    "schemathesis>=4.30.0",
 ]
 
 [tool.ruff]
@@ -40,10 +42,12 @@ warn_required_dynamic_aliases = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra --strict-markers -m 'not integration'"
+addopts = "-ra --strict-markers -m 'not integration and not fuzz'"
 markers = [
     "integration: hits the real system under test; excluded from the default run",
+    "fuzz: runs api conformance tests via schemathesis; excluded from default and integration runs"
 ]
+xfail_strict = true
 
 [build-system]
 requires = ["hatchling"]

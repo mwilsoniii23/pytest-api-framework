@@ -1,0 +1,546 @@
+openapi: 3.1.0
+info:
+  title: Restful Booker
+  description: |
+    Unofficial OpenAPI specification for Restful Booker, authored from 
+    the published apiDoc documentation and verified against observed 
+    behavior. The API does not publish a machine-readable contract.
+    
+    Scope: JSON only. The API also accepts XML and form-urlencoded 
+    payloads; those are not yet specified.
+    
+    Where observed behavior deviates from HTTP conventions, this 
+    document records what the API does and notes the deviation.
+  version: 1.0.0
+
+servers:
+  - url: 'https://restful-booker.herokuapp.com/'
+
+components:
+  securitySchemes:
+    TokenCookie:
+      type: apiKey
+      in: cookie
+      name: token
+      description: Auth token returned by POST /auth, sent as Cookie token={token}.
+    BasicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    AuthRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Username for authentication.
+          examples:
+            - admin
+        password:
+          type: string
+          description: Password for authentication.
+          examples:
+            - password123
+
+    AuthResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: Auth token to use for access to the PUT and DELETE /booking endpoints.
+          examples:
+            - abc123
+    AuthError:
+      type: object
+      addtionalProperties: false
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          description: Reason Auth token is not returned in response.
+          examples:
+            - Bad Credentials
+
+    BookingDates:
+      type: object
+      additionalProperties: false
+      required:
+        - checkin
+        - checkout
+      properties:
+        checkin:
+          type: string
+          format: date
+          examples:
+            - "2026-01-01"
+        checkout:
+          type: string
+          format: date
+          examples:
+            - "2026-01-02"
+    Booking:
+      type: object
+      additionalProperties: false
+      required:
+        - firstname
+        - lastname
+        - totalprice
+        - depositpaid
+        - bookingdates
+      properties:
+        firstname:
+          type: string
+          examples:
+            - Jim
+        lastname:
+          type: string
+          examples:
+            - Brown
+        totalprice:
+          type: integer
+          examples:
+            - 111
+        depositpaid:
+          type: boolean
+          examples:
+            - true
+        bookingdates:
+          $ref: '#/components/schemas/BookingDates'
+        additionalneeds:
+          type:
+            - string
+            - "null"
+          examples:
+            - Breakfast
+
+    PartialBooking:
+      type: object
+      additionalProperties: false
+      properties:
+        firstname:
+          type: string
+          examples:
+            - Jim
+        lastname:
+          type: string
+          examples:
+            - Brown
+        totalprice:
+          type: integer
+          examples:
+            - 111
+        depositpaid:
+          type: boolean
+          examples:
+            - true
+        bookingdates:
+          $ref: '#/components/schemas/BookingDates'
+        additionalneeds:
+          type:
+            - string
+            - "null"
+          examples:
+            - Breakfast
+
+    CreateBookingResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - bookingid
+        - booking
+      properties:
+        bookingid:
+          type: integer
+          examples:
+            - 1
+        booking:
+          $ref: "#/components/schemas/Booking"
+
+    BookingId:
+      type: object
+      additionalProperties: false
+      required:
+        - bookingid
+      properties:
+        bookingid:
+          type: integer
+          examples:
+            - 1
+
+    ErrorResponse:
+      description: |
+        Restful Booker commonly returns plain text error bodies rather than
+        structured JSON.
+      type: string
+      examples:
+        - Forbidden
+        - Not Found
+        - Bad credentials
+
+  parameters:
+    BookingIdPath:
+      name: id
+      in: path
+      description: The ID of the booking to delete.
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+
+    FirstnameQuery:
+      name: firstname
+      in: query
+      description: The first name of the booking to retrieve.
+      required: false
+      schema:
+        type: string
+
+    LastnameQuery:
+      name: lastname
+      in: query
+      required: false
+      description: Filter booking ids by last name.
+      schema:
+        type: string
+
+    CheckinQuery:
+      name: checkin
+      in: query
+      required: false
+      description: Filter booking ids by check-in date.
+      schema:
+        type: string
+        format: date
+
+    CheckoutQuery:
+      name: checkout
+      in: query
+      required: false
+      description: |
+        Filter booking ids by check-out date. Returns booking with a checkout date greater than or equal to this value.
+        Format must be CCYY-MM-DD.
+      schema:
+        type: string
+        format: date
+        pattern: '^\d{4}-\d{2}-\d{2}$'
+        minLength: 10
+        maxLength: 10
+
+paths:
+  /auth:
+    post:
+      tags:
+        - Auth
+      summary: Creates a new auth token to use for access to the PUT and DELETE /booking endpoints.
+      description: |
+        Returns 200 OK on success.
+      operationId: createAuthToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRequest"
+            examples:
+              validCredentials:
+                value:
+                  username: admin
+                  password: password123
+      responses:
+        '200':
+          description: Authentication successful.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/AuthResponse"
+                  - $ref: "#/components/schemas/AuthError"
+              description: |
+                Returns 200 for both success and failure. A failed authentication
+                returns {"reason" "Bad credentials"} rather than 401.
+                See docs/bugs-found.md #45, 46
+              examples:
+                success:
+                  value:
+                    token: abc123
+                failure:
+                  value:
+                    reason: Bad credentials
+        '400':
+          description: Invalid credentials or malformed request.
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /booking:
+    get:
+      tags:
+        - Booking
+      summary: Get booking ids.
+      description: |
+        Returns booking ids. Optional query parameters filter by name and/or date.
+        Because Restful Booker is a public shared instance, clients must not assert
+        on the total number of returned bookings.
+      operationId: listBookingIds
+      parameters:
+        - $ref: "#/components/parameters/FirstnameQuery"
+        - $ref: "#/components/parameters/LastnameQuery"
+        - $ref: "#/components/parameters/CheckinQuery"
+        - $ref: "#/components/parameters/CheckoutQuery"
+      responses:
+        '200':
+          description: Booking ids returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BookingId"
+              examples:
+                bookingIds:
+                  value:
+                    - bookingid: 1
+                    - bookingid: 2
+
+    post:
+      tags:
+        - Booking
+      summary: Create a booking.
+      description: Creates a new booking.
+      operationId: createBooking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Booking"
+            examples:
+              booking:
+                value:
+                  firstname: Jim
+                  lastname: Brown
+                  totalprice: 111
+                  depositpaid: true
+                  bookingdates:
+                    checkin: "2026-01-01"
+                    checkout: "2026-01-02"
+                  additionalneeds: Breakfast
+      responses:
+        '200':
+          description: Booking created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateBookingResponse"
+              examples:
+                created:
+                  value:
+                    bookingid: 1
+                    booking:
+                      firstname: Jim
+                      lastname: Brown
+                      totalprice: 111
+                      depositpaid: true
+                      bookingdates:
+                        checkin: "2026-01-01"
+                        checkout: "2026-01-02"
+                      additionalneeds: Breakfast
+
+  /booking/{id}:
+    get:
+      tags:
+        - Booking
+      summary: Get a booking.
+      description: Returns a booking by id.
+      operationId: getBooking
+      parameters:
+        - $ref: "#/components/parameters/BookingIdPath"
+      responses:
+        "200":
+          description: Booking returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+              examples:
+                booking:
+                  value:
+                    firstname: Jim
+                    lastname: Brown
+                    totalprice: 111
+                    depositpaid: true
+                    bookingdates:
+                      checkin: "2026-01-01"
+                      checkout: "2026-01-02"
+                    additionalneeds: Breakfast
+        "404":
+          description: Booking not found.
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      tags:
+        - Booking
+      summary: Update a booking.
+      description: |
+        Replaces an existing booking.
+
+        Requires either a token cookie or Basic authentication.
+      operationId: updateBooking
+      security:
+        - TokenCookie: []
+        - BasicAuth: []
+      parameters:
+        - $ref: "#/components/parameters/BookingIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Booking"
+            examples:
+              booking:
+                value:
+                  firstname: Jim
+                  lastname: Brown
+                  totalprice: 111
+                  depositpaid: true
+                  bookingdates:
+                    checkin: "2026-01-01"
+                    checkout: "2026-01-02"
+                  additionalneeds: Breakfast
+      responses:
+        "200":
+          description: Booking updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "403":
+          description: Authentication failed or missing.
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Booking not found.
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    patch:
+      tags:
+        - Booking
+      summary: Partially update a booking.
+      description: |
+        Partially updates an existing booking.
+
+        Observed behavior requires authentication for PATCH as well as PUT and
+        DELETE, even though the published apiDoc text historically omitted PATCH
+        from the auth-token summary.
+      operationId: partialUpdateBooking
+      security:
+        - TokenCookie: []
+        - BasicAuth: []
+      parameters:
+        - $ref: "#/components/parameters/BookingIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartialBooking"
+            examples:
+              partialBooking:
+                value:
+                  firstname: James
+                  lastname: Brown
+      responses:
+        "200":
+          description: Booking updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "403":
+          description: Authentication failed or missing.
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Booking not found.
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags:
+        - Booking
+      summary: Delete a booking.
+      description: |
+        Deletes a booking.
+
+        Requires either a token cookie or Basic authentication.
+
+        Restful Booker returns 201 Created on successful deletion. That is
+        non-standard for DELETE, but this spec records observed API behavior.
+      operationId: deleteBooking
+      security:
+        - TokenCookie: []
+        - BasicAuth: []
+      parameters:
+        - $ref: "#/components/parameters/BookingIdPath"
+      responses:
+        "201":
+          description: Booking deleted. The status code is the API's observed behavior.
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                deleted:
+                  value: Created
+        "403":
+          description: Authentication failed or missing.
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Booking not found.
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /ping:
+    get:
+      tags:
+        - Health
+      summary: Health check.
+      description: Confirms the API is up.
+      operationId: ping
+      responses:
+        "201":
+          description: API is reachable. Restful Booker returns 201 Created for this endpoint.
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                created:
+                  value: Created
