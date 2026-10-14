@@ -42,7 +42,7 @@ warn_required_dynamic_aliases = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra --strict-markers -m 'not integration'"
+addopts = "-ra --strict-markers -m 'not integration and not fuzz'"
 markers = [
     "integration: hits the real system under test; excluded from the default run",
     "fuzz: runs api conformance tests via schemathesis; excluded from default and integration runs"
