@@ -32,3 +32,13 @@ def test_create_booking_requires_additionalneeds() -> None:
                 created_booking_id = response.json()["bookingid"]
                 with contextlib.suppress(BookingApiError):
                     service.delete_booking(created_booking_id)
+
+
+@pytest.mark.integration
+@pytest.mark.xfail(
+    reason="CreateBooking endpoint returns 500 - Internal Server Error when request missing payload"
+)
+def test_create_booking_with_no_payload_is_rejected() -> None:
+    with ApiClient() as client:
+        response = client.post("/booking")
+        assert response.status_code == 400
