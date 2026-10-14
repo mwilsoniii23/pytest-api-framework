@@ -5,11 +5,12 @@ from pathlib import Path
 import yaml
 
 from apiframework.models.booking import Booking
+from tests.conftest import SPEC_PATH
 
 
 def test_openapi_booking_schema_matches_model() -> None:
     """The spec and the model must describe the same shape."""
-    spec = yaml.safe_load(Path("docs/openapi.yaml").read_text())
+    spec = yaml.safe_load(Path(str(SPEC_PATH)).read_text())
     spec_schema = spec["components"]["schemas"]["Booking"]
     model_schema = Booking.model_json_schema(by_alias=True)
 

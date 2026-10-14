@@ -6,8 +6,9 @@ import schemathesis
 from hypothesis import settings
 
 from apiframework.config.settings import get_settings
+from tests.conftest import SPEC_PATH
 
-schema = schemathesis.openapi.from_path("docs/openapi.yaml")
+schema = schemathesis.openapi.from_path(str(SPEC_PATH))
 
 DESTRUCTIVE = {"PUT", "PATCH", "DELETE"}
 
