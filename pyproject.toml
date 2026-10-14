@@ -45,6 +45,7 @@ testpaths = ["tests"]
 addopts = "-ra --strict-markers -m 'not integration'"
 markers = [
     "integration: hits the real system under test; excluded from the default run",
+    "fuzz: runs api conformance tests via schemathesis; excluded from default and integration runs"
 ]
 xfail_strict = true
 

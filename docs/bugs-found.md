@@ -3,17 +3,17 @@
 Restful Booker (https://restful-booker.herokuapp.com), a public demo API.
 Each entry links to the covering regression test.
 
-| #                                                                     | Severity | Type          | Endpoint               | Summary                                                                            | Test                                                                                    |
-|-----------------------------------------------------------------------|----------|---------------|------------------------|------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
-| [#16](https://github.com/mwilsoniii23/pytest-api-framework/issues/16) | 3-Medium | Documentation | `PATCH /booking/{id}`  | Requires an auth token, but the `/auth` documentation lists only PUT and DELETE    | `tests/functional/test_booking_patch.py::test_patch_without_auth_token_is_rejected`     |
-| [#40](https://github.com/mwilsoniii23/pytest-api-framework/issues/40) | 3-Medium | Design        | `DELETE /booking/{id}` | DELETE returns `201 Created`                                                       | `tests/functional/test_booking_delete.py::test_delete_booking_returns_success_status`   |
-| [#41](https://github.com/mwilsoniii23/pytest-api-framework/issues/41) | 4-Low    | Design        | `GET /ping`            | `/ping` returns `201 Created`                                                      | `tests/functional/test_booking_health.py::test_health_check_returns_200`                |
-| [#42](https://github.com/mwilsoniii23/pytest-api-framework/issues/42) | 3-Medium | Documentation | `POST /booking/`       | `additionalneeds` is documented as required (`"optional": false`) on CreateBooking | `tests/functional/test_create_booking.py::test_create_booking_requires_additionalneeds` |
-| [#43](https://github.com/mwilsoniii23/pytest-api-framework/issues/43) | 5-Minor  | Documentation | `PATCH /booking/{id}`  | The PATCH documentation examples all use `curl -X PUT`                             | Not Automatable - documentation only                                                    |
-| [#45](https://github.com/mwilsoniii23/pytest-api-framework/issues/45) | 3-Medium | Design        | `POST /auth`           | Invalid data returns 200 "Bad Credentials" response                                | `tests/functional/test_auth.py::test_auth_with_invalid_credentials_is_rejected`         |
-| [#46](https://github.com/mwilsoniii23/pytest-api-framework/issues/46) | 3-Medium | Design        | `POST /auth`           | No Payload in request returns 200 "Bad Credentials" response                       | `tests/functional/test_auth.py::test_auth_without_payload_is_rejected`                  |
-| [#47](https://github.com/mwilsoniii23/pytest-api-framework/issues/47) | 5-Minor  | Design        | `GET /ping`            | Unsupported method TRACE returned 404, expected 405 Method Not Allowed             | `tests/functional/test_booking_health.py::test_unsupported_method_trace_returns_405`    |
-| [#48](https://github.com/mwilsoniii23/pytest-api-framework/issues/48) | 2-High   | Design        | `GET /booking`         | An empty `checkout` query parameter crashes the server                             | `tests/functional/test_booking_get_all_bookings_with_empty_checkout_query_parameter.py` |
+| #                                                                     | Severity | Type          | Endpoint               | Summary                                                                            | Test                                                                                     |
+|-----------------------------------------------------------------------|----------|---------------|------------------------|------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| [#16](https://github.com/mwilsoniii23/pytest-api-framework/issues/16) | 3-Medium | Documentation | `PATCH /booking/{id}`  | Requires an auth token, but the `/auth` documentation lists only PUT and DELETE    | `tests/functional/test_booking_patch.py::test_patch_without_auth_token_is_rejected`      |
+| [#40](https://github.com/mwilsoniii23/pytest-api-framework/issues/40) | 3-Medium | Design        | `DELETE /booking/{id}` | DELETE returns `201 Created`                                                       | `tests/functional/test_booking_delete.py::test_delete_booking_returns_success_status`    |
+| [#41](https://github.com/mwilsoniii23/pytest-api-framework/issues/41) | 4-Low    | Design        | `GET /ping`            | `/ping` returns `201 Created`                                                      | `tests/functional/test_booking_health.py::test_health_check_returns_200`                 |
+| [#42](https://github.com/mwilsoniii23/pytest-api-framework/issues/42) | 3-Medium | Documentation | `POST /booking/`       | `additionalneeds` is documented as required (`"optional": false`) on CreateBooking | `tests/functional/test_create_booking.py::test_create_booking_requires_additionalneeds`  |
+| [#43](https://github.com/mwilsoniii23/pytest-api-framework/issues/43) | 5-Minor  | Documentation | `PATCH /booking/{id}`  | The PATCH documentation examples all use `curl -X PUT`                             | Not Automatable - documentation only                                                     |
+| [#45](https://github.com/mwilsoniii23/pytest-api-framework/issues/45) | 2-High   | Design        | `POST /auth`           | `POST /auth` returns `200 OK` on failed authentication                             | `tests/functional/test_auth.py::test_auth_with_invalid_credentials_is_rejected`          |
+| [#46](https://github.com/mwilsoniii23/pytest-api-framework/issues/46) | 2-High   | Design        | `POST /auth`           | `POST /booking` with no body causes an unhandled server error                      | `tests/functional/test_auth.py::test_auth_without_payload_is_rejected`                   |
+| [#47](https://github.com/mwilsoniii23/pytest-api-framework/issues/47) | 5-Minor  | Design        | `GET /ping`            | Unsupported method TRACE returned 404, expected 405 Method Not Allowed             | `tests/functional/test_booking_health.py::test_unsupported_method_trace_returns_405`     |
+| [#48](https://github.com/mwilsoniii23/pytest-api-framework/issues/48) | 2-High   | Design        | `GET /booking`         | Non-date values in `checkin`/`checkout` cause an unhandled server error            | `tests/functional/test_booking_get_booking.py::test_empty_checkout_param_is_rejected.py` |
 ---
 
 ## #16 — PATCH requires auth, undocumented
@@ -185,21 +185,28 @@ Documentation-only defect; no automated test coverage.
 
 ---
 
-## 45 – Invalid data returns 200 "Bad Credentials" response 
+## 45 – `POST /auth` returns `200 OK` on failed authentication
 
-**Severity:** 3-Medium \
+**Severity:** 2-High \
 **Type:** Design \
 **Endpoint:** `POST /auth`
 
 **Repro**
 
 ```bash
+# Invalid Credentials
 curl --location 'https://restful-booker.herokuapp.com/auth' \
 --header 'Content-Type: application/json' \
 --data '{
     "username": "",
     "password": ""
 }'
+```
+and
+```bash
+# No request payload
+curl --location --request POST 'https://restful-booker.herokuapp.com/auth' \
+--header 'Content-Type: application/json'
 ```
 
 **Expected:** 
@@ -218,7 +225,8 @@ API accepted the schema-violating request and returned 200 "Bad Credentials" res
 
 **Impact:** 
 
-
+A client doing `if response.ok` proceeds as authenticated.
+A client reading `response.json()["token"]` gets a `KeyError` instead of a clear 401.  Should be `401 Unauthorized`.
 
 **Covered by:**
 
@@ -226,16 +234,16 @@ API accepted the schema-violating request and returned 200 "Bad Credentials" res
 
 ---
 
-## 46 – No Payload in request returns 200 "Bad Credentials" response 
+## 46 – `POST /booking` with no body causes an unhandled server error 
 
-**Severity:** 3-Medium \
+**Severity:** 2-High \
 **Type:** Design \
-**Endpoint:** `POST /auth`
+**Endpoint:** `POST /booking`
 
 **Repro**
 
 ```bash
-curl --location --request POST 'https://restful-booker.herokuapp.com/auth' \
+curl --location --request POST 'https://restful-booker.herokuapp.com/booking' \
 --header 'Content-Type: application/json'
 ```
 
@@ -323,6 +331,6 @@ Expected `400 - Bad Request`
 
 **Covered by:**
 
-`tests/functional/test_booking_get_all_bookings_with_empty_checkout_query_parameter.py`
+`tests/functional/test_get_booking::test_empty_checkout_param_is_rejected`
 
 ---

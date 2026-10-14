@@ -57,6 +57,17 @@ components:
           description: Auth token to use for access to the PUT and DELETE /booking endpoints.
           examples:
             - abc123
+    AuthError:
+      type: object
+      addtionalProperties: false
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          description: Reason Auth token is not returned in response.
+          examples:
+            - Bad Credentials
 
     BookingDates:
       type: object
@@ -249,11 +260,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthResponse"
+                oneOf:
+                  - $ref: "#/components/schemas/AuthResponse"
+                  - $ref: "#/components/schemas/AuthError"
+              description: |
+                Returns 200 for both success and failure. A failed authentication
+                returns {"reason" "Bad credentials"} rather than 401.
+                See docs/bugs-found.md #45, 46
               examples:
                 success:
                   value:
                     token: abc123
+                failure:
+                  value:
+                    reason: Bad credentials
         '400':
           description: Invalid credentials or malformed request.
           content:
