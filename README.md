@@ -1,8 +1,28 @@
-# Restful-Booker API Test Automation Framework [![Status: In Progress](https://img.shields.io/badge/Status-In%20Progress-yellow.svg)](https://github.com/mwilsoniii23/pytest-api-framework)
+# Restful-Booker API Test Automation Framework [![CI](https://github.com/mwilsoniii23/pytest-api-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/mwilsoniii23/pytest-api-framework/actions/workflows/ci.yml)
 
-> **Status:** 🚧 **In Progress** — Active development, test coverage expansion, and CI hardening ongoing.
+> **Status:** 🚧 **In Progress** — Core framework complete.  BDD feature scenarios, Docker packaging, and Allure reporting in progress.
 
-A production-grade, enterprise-ready API test automation framework built with **Python**, **PyTest**, and **PyTest-BDD**. Tailored against the Restful-Booker platform, this framework combines full BDD feature scenarios, Pydantic domain models, service-level API abstraction, contract verification against OpenAPI specs, and targeted unit test coverage.
+An API test automation framework with strict typing, contract validation, and property-based fuzzing.
+The framework tests [Restful-Booker](https://restful-booker.herokuapp.com/apidoc/index.html) API endpoints using a hybrid approach, combining:
+   - BDD feature scenarios
+   - Pydantic-validated domain models
+   - HTTPX client with granular timeouts and transport-level retries
+   - Property-based contract testing with Schemathesis
+   - and rigorous type-checking
+
+Restful-Booker does not publish a machine-readable contract, so this project includes a `docs/openapi.yaml` file, authored from the apiDoc (https://restful-booker.herokuapp.com/apidoc/api_data.json).
+Testing against it found **nine defects**, documented in docs/bugs-found.md with a regression test for each.
+
+
+Defects were identified in four ways:
+1. Close reading of the published documentation and manual testing
+2. Targeted negative testcases
+3. Automated contract validation against `docs/openapi.yaml`
+4. Automated property-based contract testing with Schemathesis
+
+The fuzzer found the two most serious - `POST /auth` returns `200 OK` on failed authentication, and malformed query parameters crash the server.
+
+**Stack:** pytest · httpx · pydantic · pytest-bdd · Schemathesis · uv
 
 ---
 
@@ -10,10 +30,10 @@ A production-grade, enterprise-ready API test automation framework built with **
 
 * **Hybrid Testing Strategy**: Complete coverage through BDD feature files (`.feature`), functional integration suites, and isolated internal unit tests.
 * **Service Object Pattern**: Clean separation between raw HTTP clients (`src/apiframework/http/`), service domain logic (`booking_service.py`), and test scripts.
-* **Pydantic Schema Models**: Strongly-typed data models (`booking.py`) for automated request serialization and response validation.
+* **Pydantic Schema Models**: Strongly typed data models (`booking.py`) for automated request serialization and response validation.
 * **OpenAPI Contract & Conformance Testing**: Contract checks and conformance tests against `docs/openapi.yaml` to guarantee spec compliance and catch API drifts early.
 * **TestData Builders & Factories**: Dynamic test data generation using custom builder patterns (`support/builders.py`, `factories.py`).
-* **Defect & Bug Tracking**: Dedicated defect coverage tests (`test_defect_coverage.py`) mapped to explicit bug documentation in `docs/bugs-found.md`.
+* **Defect & Bug Tracking**: Dedicated tests (`test_defect_coverage.py`) ensuring mapped to explicit bug documentation in `docs/bugs-found.md`.
 
 ---
 
@@ -26,7 +46,7 @@ pytest-api-framework/
 │       └── ci.yml                 # GitHub Actions CI workflow pipeline (uv-powered)
 ├── docs/
 │   ├── bugs-found.md              # Documented API defects and reproduction steps
-│   └── openapi.yaml               # OpenAPI specification contract
+│   └── openapi.yaml               # OpenAPI specification for Restful-Booker API, authored from their docs since the API does not provide an OpenAPI spec
 ├── src/
 │   └── apiframework/
 │       ├── config/                # Environment and app setting management
@@ -41,7 +61,7 @@ pytest-api-framework/
 │   │   ├── features/              # Gherkin scenarios (.feature files)
 │   │   └── steps/                 # Step definitions for BDD scenarios
 │   └── unit/                      # Isolated unit tests for framework components
-├── pyproject.toml / requirements.txt
+├── pyproject.toml
 └── README.md
 ```
 
@@ -71,7 +91,7 @@ pytest-api-framework/
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
    # Install package and dependencies in editable mode
-   uv pip install -e .
+   uv sync
    ```
 
 ---
@@ -81,20 +101,19 @@ pytest-api-framework/
 ### Run Full Test Suite
 Executes all functional, BDD, and unit tests:
 ```bash
-pytest
+uv run pytest
 ```
-*(Tip: You can also run tests instantly without manual activation using `uv run pytest`)*
 
 ### Run Unit Tests Only
 Verify internal framework components (services, builders, client logic):
 ```bash
-pytest tests/unit/
+uv run pytest tests/unit/
 ```
 
 ### Run Functional & BDD Scenarios
 Execute end-to-end API lifecycle and feature scenarios:
 ```bash
-pytest tests/functional/
+uv run pytest tests/functional/
 ```
 
 ### Run OpenAPI Contract Conformance Tests
@@ -104,7 +123,7 @@ pytest tests/functional/test_openapi_conformance.py tests/unit/test_openapi_cont
 ```
 
 ### Run Defect Verification Tests
-Run regression checks specifically covering known API defects:
+Validate bugs in bugs-found.md mapped to explicit test cases:
 ```bash
 pytest tests/unit/test_defect_coverage.py
 ```
@@ -118,49 +137,57 @@ This repository includes an automated CI pipeline configured with **GitHub Actio
 ### Example Workflow Configuration (`.github/workflows/ci.yml`)
 
 ```yaml
-name: API Test Automation Pipeline
+name: CI
 
 on:
-  push:
-    branches: [ main, master ]
   pull_request:
-    branches: [ main, master ]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  quality:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 10
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up uv
+      - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+        run: uv python install 3.12
 
-      - name: Install Dependencies
-        run: |
-          uv pip install --system -e .
+      - name: Install dependencies
+        run: uv sync --locked
 
-      - name: Run PyTest Suite
-        run: |
-          pytest --verbose --tb=short
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Format check
+        run: uv run ruff format --check .
+
+      - name: Type check
+        run: uv run mypy src
+
+      - name: Test
+        run: uv run pytest -v
 ```
 
 ---
 
 ## Architecture Overview
 
-1. **HTTP Client Factory (`http/factory.py`)**: Manages session creation, base URLs, and authentication header injection.
-2. **Service Layer (`services/booking_service.py`)**: Wraps endpoints into strongly-typed methods returning domain models or HTTP response wrappers.
-3. **Pydantic Validation (`models/booking.py`)**: Ensures strict type-checking on request payloads and response contracts.
-4. **Data Builders (`support/builders.py`)**: Provides fluent interfaces to generate valid or edge-case payload data dynamically for testing.
+1. **HTTP Client Factory (`http/factory.py`)**: Manages session creation, base URLs, and builds an httpx.Client instance with timeouts.
+2. **Auth Factory (`http/auth.py`)**: Manages authentication header injection and token refresh.
+3. **Service Layer (`services/booking_service.py`)**: Wraps endpoints into strongly typed methods returning domain models or HTTP response wrappers.
+4. **Pydantic Validation (`models/booking.py`)**: Ensures strict type-checking on request payloads and response contracts.
+5. **Data Builders (`support/builders.py`)**: Provides fluent interfaces to generate valid or edge-case payload data dynamically for testing.
 
 ---
 
